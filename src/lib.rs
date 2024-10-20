@@ -2,9 +2,8 @@
 //!
 //! # Why is this useful?
 //!
-//! One use case (the one that made me write this), would be to ensure a closure provided by a library user
-//! only returns a selection of values provided
-//! to it.
+//! One use case (the one that made me write this), would be to ensure a function provided by a library user
+//! only returns a selection of values provided to it.
 //!
 //! For example:
 //! ```
@@ -114,7 +113,7 @@
 //! ## Alternative?
 //!
 //! If you thought about it for a bit, you may realize that you can just use an enum
-//! over "choosable" values, and then providing a mapping from that enum to our original
+//! over "choosable" values, and then provide a mapping from that enum to our original
 //! values:
 //! ```
 //! # #[derive(Clone, Copy)]
@@ -161,10 +160,12 @@
 //!     // ...
 //! }
 //! ```
-//! This works! But this only works for returning a single value (plus it is kind of annoying to write a bunch of
-//! boilerplate enums everytime you want to choose between some values). When we try to return multiple (non-duplicate) values
-//! (as an array, tuple, Vec, etc.), we run into the same problem as earlier, where we can't stop a user from providing
-//! two or more duplicate choices (this is an example of choices *with* replacement, when we want choices *without* replacement).
+//! This works! But this only works for returning a single value from a subset known at compile time (plus it is kind of annoying
+//! to write a bunch of boilerplate enums everytime you want to choose between some values).
+//!
+//! When we try to return multiple (non-duplicate) values (as an array, tuple, Vec, etc.), we run into the same problem as earlier,
+//! where we can't stop a user from providing two or more duplicate choices (this is an example of choices *with* replacement, when
+//! we want choices *without* replacement).
 //!
 //! ## Concrete use case
 //!
@@ -183,7 +184,7 @@
 //! // to a Guard that we cannot construct
 //! let one = Choice::with_guard(1, unreachable!());
 //! ```
-//! So we know choices cannot be created out of thin air, but what about the
+//! So we know choices cannot be created out of thin air (only within this library), but what about the
 //! owned [Choice]s provided to us through [`with`](crate::Selector::with) (or similar methods)?
 //! If we moved them out of the closure (since we have ownership), and then used them as choices
 //! for a new [choose_from] with the same type, then we could return values that aren't from the
@@ -222,12 +223,31 @@ pub use choice::Choice;
 use choice::Guard;
 pub use vec::Selector;
 
-/// Wraps our choices and allows us to choose from them
+/// Wraps our arbitrary number of choices and allows us to force a function/closure to
+/// choose from them
+/// ```
+/// use choose_from::choose_from;
+///
+/// // every other number from 1 to 99 starting at 1
+/// let choices: Vec<i32> = (1..100).step_by(2).collect();
+///
+/// let chosen: [i32; 4] = choose_from(choices).with(|mut choices| {
+///     // take first four as our selection
+///     choices
+///         .drain(..4)
+///         .collect::<Vec<_>>()
+///         .try_into()
+///         .unwrap()
+/// });
+///
+/// assert_eq!(chosen, [1, 3, 5, 7]);
+/// ```
 pub fn choose_from<T>(choices: Vec<T>) -> Selector<T> {
     Selector::with_choices(choices)
 }
 
-/// Wraps our fixed number of choices and allows us to choose from them
+/// Wraps our fixed number of choices and allows us to force a function/closure to choose
+/// from them
 /// ```
 /// use choose_from::choose_from_fixed;
 /// let chosen = choose_from_fixed(["Hi", "how", "are ya?"]).with(|[first, second, third]| {
