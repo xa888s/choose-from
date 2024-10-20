@@ -231,10 +231,10 @@ pub use vec::Selector;
 /// // every other number from 1 to 99 starting at 1
 /// let choices: Vec<i32> = (1..100).step_by(2).collect();
 ///
-/// let chosen: [i32; 4] = choose_from(choices).with(|choices| {
+/// let chosen: [i32; 4] = choose_from(choices).with(|mut choices| {
 ///     // take first four as our selection
 ///     choices
-///         .take(4)
+///         .drain(..4)
 ///         .collect::<Vec<_>>()
 ///         .try_into()
 ///         .unwrap()
@@ -272,13 +272,33 @@ pub fn choose_from_fixed<const N: usize, T>(choices: [T; N]) -> SelectorArr<N, T
 mod tests {
     use super::*;
 
-    #[test]
-    fn choose_two_i32s_from_fixed_four() {
-        let choices = [1, 2, 3, 4];
-        let chosen = choose_from_fixed(choices).with(|[one, two, _, _]| [one, two]);
+    macro_rules! test_fixed_choices {
+        ($func_name:ident, $choices: expr, $chosen_type: ty, $func: expr, $result: expr) => {
+            #[test]
+            fn $func_name() {
+                let choices = $choices;
+                let chosen: $chosen_type = choose_from_fixed(choices).with($func);
 
-        assert_eq!(chosen, [1, 2]);
+                assert_eq!(chosen, $result);
+            }
+        };
     }
+
+    test_fixed_choices!(
+        choose_two_i32s_from_fixed_four,
+        [1, 2, 3, 4],
+        [i32; 2],
+        |[one, two, _, _]| { [one, two] },
+        [1, 2]
+    );
+
+    test_fixed_choices!(
+        choose_two_strs_from_fixed_three,
+        ["a", "b", "c"],
+        [&str; 2],
+        |[_, b, c]| { [b, c] },
+        ["b", "c"]
+    );
 
     // TODO: write more tests
 }

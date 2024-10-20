@@ -75,9 +75,9 @@ where
     ///
     /// assert_eq!(chosen, ["Hi", "are ya?"]);
     /// ```
-    pub fn any_with<'guard, C>(self, chooser: C) -> Vec<T>
+    pub fn any_with<C>(self, chooser: C) -> Vec<T>
     where
-        C: FnOnce(Vec<Choice<'_, T>>) -> Vec<Choice<'guard, T>>,
+        C: FnOnce(Vec<Choice<'_, T>>) -> Vec<Choice<'_, T>>,
     {
         let _guard = Guard;
         let choices = self.into_choices(&_guard);
