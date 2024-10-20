@@ -2,12 +2,18 @@ use crate::{choice, Choice, Guard};
 
 /// Wraps a variable amount of choices and provides methods that guarantee selection from those choices.
 #[derive(Debug, Hash, PartialEq, Eq)]
-pub struct Selector<T> {
-    choices: Vec<T>,
+pub struct Selector<I, T>
+where
+    I: IntoIterator<Item = T>,
+{
+    choices: I,
 }
 
-impl<T> Selector<T> {
-    pub(crate) fn with_choices(choices: Vec<T>) -> Selector<T> {
+impl<I, T> Selector<I, T>
+where
+    I: IntoIterator<Item = T>,
+{
+    pub(crate) fn with_choices(choices: I) -> Selector<I, T> {
         Selector { choices }
     }
 
@@ -69,9 +75,9 @@ impl<T> Selector<T> {
     ///
     /// assert_eq!(chosen, ["Hi", "are ya?"]);
     /// ```
-    pub fn any_with<C>(self, chooser: C) -> Vec<T>
+    pub fn any_with<'guard, C>(self, chooser: C) -> Vec<T>
     where
-        C: FnOnce(Vec<Choice<'_, T>>) -> Vec<Choice<'_, T>>,
+        C: FnOnce(Vec<Choice<'_, T>>) -> Vec<Choice<'guard, T>>,
     {
         let _guard = Guard;
         let choices = self.into_choices(&_guard);

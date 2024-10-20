@@ -231,10 +231,10 @@ pub use vec::Selector;
 /// // every other number from 1 to 99 starting at 1
 /// let choices: Vec<i32> = (1..100).step_by(2).collect();
 ///
-/// let chosen: [i32; 4] = choose_from(choices).with(|mut choices| {
+/// let chosen: [i32; 4] = choose_from(choices).with(|choices| {
 ///     // take first four as our selection
 ///     choices
-///         .drain(..4)
+///         .take(4)
 ///         .collect::<Vec<_>>()
 ///         .try_into()
 ///         .unwrap()
@@ -242,7 +242,10 @@ pub use vec::Selector;
 ///
 /// assert_eq!(chosen, [1, 3, 5, 7]);
 /// ```
-pub fn choose_from<T>(choices: Vec<T>) -> Selector<T> {
+pub fn choose_from<I, T>(choices: I) -> Selector<I, T>
+where
+    I: IntoIterator<Item = T>,
+{
     Selector::with_choices(choices)
 }
 
