@@ -1,5 +1,13 @@
 [package]
 name = "choose-from"
+authors = ["xa888s"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/xa888s/choose-from"
+documentation = "https://docs.rs/choose-from"
+description = """
+Simple dependency-free crate for enforcing a selection from set values
+"""
 version = "0.1.0"
 edition = "2021"
 
