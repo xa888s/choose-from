@@ -8,7 +8,7 @@ documentation = "https://docs.rs/choose-from"
 description = """
 Simple dependency-free crate for enforcing a selection from set values
 """
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 
 [dependencies]

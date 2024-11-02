@@ -1,12 +1,23 @@
+use std::ops::Deref;
+
 #[derive(Debug)]
 pub(crate) struct Guard;
 
-/// A specific choice, yielded by [`Selector::with`](crate::Selector::with) or [`SelectorArr::with`](crate::SelectorArr::with).
+/// A specific choice, passed to closure by [`Selector::with`](crate::Selector::with) or [`SelectorFixed::with`](crate::SelectorFixed::with).
 #[derive(Debug)]
 #[repr(transparent)]
 pub struct Choice<'guard, T> {
     value: T,
     _guard: std::marker::PhantomData<&'guard Guard>,
+}
+
+// This type is good to implement Deref because Choice is a transparent wrapper around T
+impl<'a, T> Deref for Choice<'a, T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
 }
 
 impl<'guard, T> Choice<'guard, T> {
@@ -15,11 +26,6 @@ impl<'guard, T> Choice<'guard, T> {
             value,
             _guard: std::marker::PhantomData,
         }
-    }
-
-    /// Allows you to inspect the value of the choice.
-    pub fn value(&self) -> &T {
-        &self.value
     }
 
     pub(crate) fn into_inner(self) -> T {
