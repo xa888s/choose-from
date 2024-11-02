@@ -163,8 +163,8 @@
 //! This works! But this only works for returning a single value from a subset known at compile time (plus it is kind of annoying
 //! to write a bunch of boilerplate enums everytime you want to choose between some values).
 //!
-//! When we try to return multiple (non-duplicate) values (as an array, tuple, Vec, etc.), we run into the same problem as earlier,
-//! where we can't stop a user from providing two or more duplicate choices (this is an example of choices *with* replacement, when
+//! When we try to return multiple values (as an array, tuple, Vec, etc.), we run into a similar problem:
+//! we can't stop a user from providing two or more duplicate choices (this is an example of choices *with* replacement, when
 //! we want choices *without* replacement).
 //!
 //! ## Concrete use case
