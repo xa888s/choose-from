@@ -89,7 +89,7 @@
 //! # #[derive(Clone, Copy)]
 //! # struct Suits<const N: usize>([Suit; N]);
 //! #
-//! use choose_from::{choose_from_fixed, Choice};
+//! use choose_from::{select_from_fixed, Choice};
 //!
 //! impl<const N: usize> Suits<N> {
 //! #   pub fn with_suits(suits: [Suit; N]) -> Suits<N> {
@@ -102,7 +102,7 @@
 //!         C: FnOnce([Choice<'_, Suit>; N]) -> [Choice<'_, Suit>; 1]
 //!     {
 //!         // have user choose some suit (this suit is guaranteed to be from our choices)
-//!         let [suit]: [Suit; 1] = choose_from_fixed(self.0).with(chooser);
+//!         let [suit]: [Suit; 1] = select_from_fixed(self.0).with(chooser);
 //!
 //!         // do stuff with suit
 //!         // ...
@@ -178,7 +178,7 @@
 //! Values are assured to be from the selection through two ways.
 //! First the only constructor for [Choice] is private
 //! ```compile_fail
-//! use choose_from::choose_from_fixed;
+//! use choose_from::select_from_fixed;
 //!
 //! // we cannot access the private constructor. And it requires a reference
 //! // to a Guard that we cannot construct
@@ -187,13 +187,13 @@
 //! So we know choices cannot be created out of thin air (only within this library), but what about the
 //! owned [Choice]s provided to us through [`with`](crate::Selector::with) (or similar methods)?
 //! If we moved them out of the closure (since we have ownership), and then used them as choices
-//! for a new [choose_from] with the same type, then we could return values that aren't from the
+//! for a new [select_from] with the same type, then we could return values that aren't from the
 //! available choices! If we try to do that:
 //! ```compile_fail
-//! use choose_from::choose_from_fixed;
+//! use choose_from::select_from_fixed;
 //!
 //! let mut smuggler = Vec::new();
-//! choose_from(vec![1, 2, 3, 4]).any_with(|choices| {
+//! select_from(vec![1, 2, 3, 4]).any_with(|choices| {
 //!     // try to move last three values out of the closure
 //!     smuggle.extend(choices.drain(1..));
 //!     choices
@@ -202,36 +202,36 @@
 //! // use the smuggled value later to do nefarious stuff
 //! // if this was possible weird_values wouldn't be from our
 //! // provided choices
-//! let weird_values = choose_from(vec![]).any_with(|_| smuggler);
+//! let weird_values = select_from(vec![]).any_with(|_| smuggler);
 //! ```
 //! This fails to compile. Remember the Guard we mentioned earlier? All choices have a
 //! lifetime specifier. They don't actually hold any value, but they act as if they hold
 //! a reference to a Guard. This stops a [Choice] from living longer than the call to
-//! [with](crate::SelectorArr) (and similar methods), since the reference for each Guard
+//! [with](crate::SelectorFixed) (and similar methods), since the reference for each Guard
 //! only lives as long as the body of the method (since [Choice] "holds" a reference to the guard,
 //! it cannot live longer than it). Both of these steps combine to ensure that the `chooser`
 //! function *MUST* select value(s) from the provided ones.
 //!
 //! If you are interested in learning more try reading the code, it is quite simple.
 
-mod arr;
 mod choice;
-mod vec;
+pub mod fixed;
+pub mod selector;
 
-pub use arr::SelectorArr;
 pub use choice::Choice;
 use choice::Guard;
-pub use vec::Selector;
+use fixed::SelectorFixed;
+use selector::Selector;
 
 /// Wraps our arbitrary number of choices and allows us to force a function/closure to
 /// choose from them
 /// ```
-/// use choose_from::choose_from;
+/// use choose_from::select_from;
 ///
 /// // every other number from 1 to 99 starting at 1
 /// let choices: Vec<i32> = (1..100).step_by(2).collect();
 ///
-/// let chosen: [i32; 4] = choose_from(choices).with(|mut choices| {
+/// let chosen: [i32; 4] = select_from(choices).with(|mut choices| {
 ///     // take first four as our selection
 ///     choices
 ///         .drain(..4)
@@ -242,7 +242,7 @@ pub use vec::Selector;
 ///
 /// assert_eq!(chosen, [1, 3, 5, 7]);
 /// ```
-pub fn choose_from<I, T>(choices: I) -> Selector<I, T>
+pub fn select_from<I, T>(choices: I) -> Selector<I, T>
 where
     I: IntoIterator<Item = T>,
 {
@@ -252,11 +252,10 @@ where
 /// Wraps our fixed number of choices and allows us to force a function/closure to choose
 /// from them
 /// ```
-/// use choose_from::choose_from_fixed;
-/// let chosen = choose_from_fixed(["Hi", "how", "are ya?"]).with(|[first, second, third]| {
+/// use choose_from::select_from_fixed;
+/// let chosen = select_from_fixed(["Hi", "how", "are ya?"]).with(|[first, second, third]| {
 ///     // the provided choices allow inspection of the values
-///     let first_val: &&str = first.value();
-///     assert_eq!(*first_val, "Hi");
+///     assert_eq!(*first, "Hi");
 ///     
 ///     // this is our selection
 ///     [first, third]
@@ -264,8 +263,8 @@ where
 ///
 /// assert_eq!(chosen, ["Hi", "are ya?"]);
 /// ```
-pub fn choose_from_fixed<const N: usize, T>(choices: [T; N]) -> SelectorArr<N, T> {
-    SelectorArr::with_choices(choices)
+pub fn select_from_fixed<const N: usize, T>(choices: [T; N]) -> SelectorFixed<N, T> {
+    SelectorFixed::with_choices(choices)
 }
 
 #[cfg(test)]
@@ -277,7 +276,7 @@ mod tests {
             #[test]
             fn $func_name() {
                 let choices = $choices;
-                let chosen: $chosen_type = choose_from_fixed(choices).with($func);
+                let chosen: $chosen_type = select_from_fixed(choices).with($func);
 
                 assert_eq!(chosen, $result);
             }

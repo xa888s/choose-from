@@ -21,13 +21,13 @@ where
     /// choices by returning a K-selection of it. The values of these choices are then
     /// returned by the function.
     /// ```
-    /// use choose_from::choose_from;
+    /// use choose_from::select_from;
     /// let choices = vec!["Hi", "how", "are ya?"];
     ///
-    /// let chosen = choose_from(choices).with(|mut choices| {
+    /// let chosen = select_from(choices).with(|mut choices| {
     ///     // the provided choices allow inspection of the values
     ///     let third = choices.pop().unwrap();
-    ///     assert_eq!(*third.value(), "are ya?");
+    ///     assert_eq!(*third, "are ya?");
     ///     
     ///     // ignore 2nd
     ///     choices.pop();
@@ -65,11 +65,11 @@ where
     /// you want to ensure some values come from the choices, but the amount of chosen values returned
     /// doesn't matter.
     /// ```
-    /// use choose_from::choose_from;
+    /// use choose_from::select_from;
     ///
     /// let choices = vec!["Hi", "how", "are ya?"];
     ///
-    /// let chosen = choose_from(choices).any_with(|choices| {
+    /// let chosen = select_from(choices).any_with(|choices| {
     ///     choices.into_iter().step_by(2).collect()
     /// });
     ///
